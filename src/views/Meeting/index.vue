@@ -1,0 +1,18 @@
+<template>
+  <div class="pages">
+    会议
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { Operation } from '@element-plus/icons-vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user'
+import { apiMeInfo } from '@/api/user'
+
+</script>
+
+<style scoped lang="scss">
+
+</style>
