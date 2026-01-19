@@ -45,6 +45,15 @@ export const useChatStore = defineStore('chat', () => {
     }
   };
 
+  // 企业模式状态
+  const enterpriseMode = ref(localStorage.getItem('enterpriseMode') === '1');
+  
+  // 切换企业模式的方法
+  const toggleEnterpriseMode = (val) => {
+    enterpriseMode.value = val;
+    localStorage.setItem('enterpriseMode', val ? '1' : '0');
+  };
+
 
   // 在 useChatStore 中添加
   const removeSession = (chatId) => {
@@ -103,6 +112,9 @@ export const useChatStore = defineStore('chat', () => {
     updateChatStatus,
     
     removeSession,
+
+    enterpriseMode,
+    toggleEnterpriseMode,
 
     
     sessions,

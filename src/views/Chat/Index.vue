@@ -25,8 +25,15 @@
           placeholder="Search"
           class="searchInput"
         />
+        <div class="customHelper" v-if="isCustomStatus" @click="toggleCustom">
+          <el-icon :size="18">
+            <ArrowLeft />
+          </el-icon>
+          <span class="customName">客服助手</span>
+        </div>
       </div>
       <div 
+        v-if="!isCustomStatus"
         v-for="item in sortedSessions" 
         class="chat-item"
         :class="{ active: $route.params.id === item.chat_id.toString(),
@@ -54,7 +61,7 @@
           <template v-if="item.chat_type === 1">
             <img :src="$formatAvatar(item.chat_logo)" alt="头像" class="avatar-img">
           </template>
-          <template v-else>
+          <template v-if="item.chat_type === 2">
             <!-- 当 image_arr 为空时显示 cover_img -->
             <template v-if="!item.image_arr || item.image_arr.length === 0">
               <img 
@@ -78,6 +85,9 @@
                 </div>
               </div>
             </template>
+          </template>
+          <template v-else-if="item.chat_type === 20">
+            <img src="/icons/kefu.png" alt="客服头像" class="avatar-img">
           </template>
         </div>
         <!-- 内容区域 -->
@@ -108,6 +118,23 @@
       <div class="loading-tip" v-if="loading">
         加载中...
       </div>
+      <div 
+        v-for="item in ServiceLists" 
+        class="CustomList" 
+        v-if="isCustomStatus" 
+        @click="selectCustom(item)"
+      >
+        <img class="CustomAvater" :src="$formatAvatar(item.logo)" alt="" srcset="">
+        <div class="CustomRight">
+          <div class="RightOne">
+            <span class="OneFirst">{{ item.nickname }}</span>
+            <span class="TwoFirst">{{ formatMsgTime(item.msg_time) }}</span>
+          </div>
+          <div class="RightTwo">
+            <span class="TwoFirst">{{ formatLastMsg(item) }}</span>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="chat-window-container">
       <router-view />
@@ -118,12 +145,13 @@
 <script setup>
 import { ref, onMounted , watch , computed ,onBeforeUnmount,onUnmounted} from 'vue'
 import { useRouter } from 'vue-router'
-import { apiSessionsList,apiAvoidDisturb,apiPutTop,apiDelSession } from '@/api/user';
+import { apiSessionsList,apiAvoidDisturb,apiPutTop,apiDelSession,apiServiceLists} from '@/api/user';
 import { formatMsgTime } from '@/utils/date.js'
 import { MuteNotification } from '@element-plus/icons-vue';
 import { useChatStore } from '@/stores/chatStore';
 import { useUserStore } from '@/stores/user';
 import { ElNotification } from 'element-plus';
+import { ArrowLeft } from '@element-plus/icons-vue';
 const userStore = useUserStore();
 const chatStore = useChatStore();
 const router = useRouter()
@@ -134,6 +162,9 @@ const loading = ref(false)
 const noMore = ref(false)
 const firstLoad = ref(true)
 const searchInput = ref(null)
+const ServiceLists = ref([])
+const isCustomStatus = ref(false)
+const isEnterpriseMode = computed(() => chatStore.enterpriseMode);
 const getSessionsList = async () => {
   if (loading.value || noMore.value) return
   loading.value = true
@@ -186,6 +217,12 @@ const delSessions = async () => {
     message: '删除成功',
     type: 'success',
   })
+}
+
+//获取客服列表
+const getServiceLists = async () => {
+  const res = await apiServiceLists()
+  ServiceLists.value = res.data.data
 }
 
 
@@ -273,7 +310,7 @@ const toggleDisturb = async () => {
 // 添加计算属性来生成排序后的列表
 const sortedSessions = computed(() => {
   // 创建副本避免直接修改原数组
-  return [...SessionsList.value].sort((a, b) => {
+  let sessions = [...SessionsList.value].sort((a, b) => {
     // 获取两个会话的置顶状态（优先使用store中的最新状态）
     const aIsTop = chatStore.getTopStatus(a.chat_id) || 0;
     const bIsTop = chatStore.getTopStatus(b.chat_id) || 0;
@@ -288,6 +325,28 @@ const sortedSessions = computed(() => {
     // 如果置顶状态相同，则按时间倒序排列（最新消息在前）
     return b.msg_time - a.msg_time;
   });
+  // 添加客服项（如果ServiceLists有数据）
+  if (ServiceLists.value && ServiceLists.value.length > 0 && isEnterpriseMode.value) {
+    // 计算总未读数
+    const totalUnread = ServiceLists.value.reduce((sum, item) => sum + (item.unread_count || 0), 0);
+    // 使用第一条记录的时间
+    const firstMsgTime = ServiceLists.value[0]?.msg_time
+    const firstMsgcontent = ServiceLists.value[0]?.last_msg
+    const customServiceItem = {
+      chat_id: 'custom_service',
+      chat_type: 20,
+      chat_logo: '/icons/kefu.png',
+      title: '客服助手',
+      msg_time: firstMsgTime,
+      last_msg: firstMsgcontent,
+      unread_count: totalUnread,
+      is_top: 0,
+      avoid_disturb: 0
+    };
+    // 将客服项插入到列表最前面（如果置顶项存在，则放在置顶项之后）
+    sessions.unshift(customServiceItem);
+  }
+  return sessions;
 });
 
 // 监听store中的置顶状态变化，强制重新排序
@@ -322,6 +381,7 @@ const handleScroll = () => {
 }
 onMounted(()=>{
   getSessionsList()
+  getServiceLists()
   window.addEventListener('scroll', handleScroll, true)
   window.addEventListener('websocket-message', debouncedHandleWebSocketMessage);
   window.addEventListener('focus', async () => {
@@ -403,7 +463,25 @@ const selectChat = (item) => {
         sign: item.sign
       }
     })
+  } else if (item.chat_type === 20) {
+    isCustomStatus.value = true
   }
+}
+const selectCustom = (item) => {
+  router.push({ 
+    name: 'custom-chat-detail',
+    params: { id: item.chat_id },
+    state: { 
+      group_id: item.chat_id,
+      nickname: item.title,
+      message_id: item.id,
+      sign: item.sign
+    }
+  })
+}
+
+const toggleCustom = () => {
+  isCustomStatus.value = !isCustomStatus.value
 }
 
 const handleWebSocketMessage = async (event) => {
@@ -574,6 +652,7 @@ $unread-red: #FF4D4F;
     display: none; /* 完全隐藏滚动条 */
   }
   .search-container {
+    cursor: pointer;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -588,6 +667,15 @@ $unread-red: #FF4D4F;
       padding: 6px;
       border-radius: 4px;
       box-sizing: border-box;
+    }
+    .customHelper{
+      padding: 10px 6px 0 6px;
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      .customName{
+        padding-left: 6px;
+      }
     }
   }
 }
@@ -772,5 +860,61 @@ $unread-red: #FF4D4F;
 .chat-item.top-chat {
   background-color: #f5f5f5; /* 置顶聊天的背景色 */
   border-left: 3px solid #41addf; /* 左侧标记线 */
+}
+
+
+
+.CustomList{
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  width: 200px;
+  cursor: pointer;
+  .CustomAvater{
+    width: 37px;
+    height: 37px;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+  .CustomRight{
+    flex: 1;
+    min-width: 0;
+    .RightOne{
+      width: 100%;
+      font-size: 14px;
+      color: $text-primary;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      .OneFirst{
+        margin-left: 10px;
+      }
+      .TwoFirst{
+        font-size: 12px;
+        color: $text-tertiary;
+      }
+    }
+    .RightTwo{
+      margin-left: 10px;
+      font-size: 12px;
+      color: $text-secondary;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; 
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      .TwoFirst{
+        flex: 1;
+        overflow: hidden;
+        font-size: 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
 }
 </style>

@@ -73,6 +73,7 @@
     
     <div class="input-wrapper">
       <el-input
+        class="Elinput"
         ref="inputRef"
         v-model="inputValue"
         type="textarea"
@@ -430,7 +431,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .chat-input-container {
   position: relative;
   background-color: #ededed;
@@ -442,7 +443,24 @@ onUnmounted(() => {
 
 .input-wrapper {
   margin-bottom: 8px;
+  
+  :deep(.el-textarea__inner) {
+    outline: none;
+    border: none !important; /* 强制移除边框 */
+    background: #ededed;
+    box-shadow: none !important; /* 确保没有阴影边框 */
+
+    &:hover,
+    &:active,
+    &:focus {
+      background: #ededed;
+      box-shadow: none !important;
+      outline: none;
+      border: none !important; /* 确保交互状态也无边框 */
+    }
+  }
 }
+
 .group_avater{
   width: 30px;
   height: 30px;
@@ -466,7 +484,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
 }
 
 .features {

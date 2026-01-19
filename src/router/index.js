@@ -61,6 +61,12 @@ const router = createRouter({
               name: 'group-chat-detail',
               component: () => import('../views/Chat/GroupChatDetail.vue'),
               props: true
+            },
+            {
+              path: 'custom/:id',
+              name: 'custom-chat-detail',
+              component: () => import('../views/Chat/CustomChatDetail.vue'),
+              props: true
             }
           ]
         },

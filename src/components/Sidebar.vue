@@ -144,6 +144,7 @@ import { ref, computed, onMounted } from 'vue';
 import { Operation } from '@element-plus/icons-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user'
+import { useChatStore } from '@/stores/chatStore';
 import { apiMeInfo } from '@/api/user'
 // 导入所有图标资源
 import homeInactive from '@/static/icons/xiaoxi.png';
@@ -157,6 +158,7 @@ import CloudActive from '@/static/icons/cloud-h.png'
 import Meeting from '@/static/icons/meeting.png'
 import MeetingActive from '@/static/icons/meeting-h.png'
 
+const chatStore = useChatStore();
 const userStore = useUserStore()
 const route = useRoute();
 const router = useRouter();
@@ -189,7 +191,7 @@ const handleLogout = () => {
 const handleEnterpriseModeChange = (val) => {
   value2.value = val
   // 保存到本地存储，1表示开启，0表示关闭
-  localStorage.setItem('enterpriseMode', val ? '1' : '0')
+  chatStore.toggleEnterpriseMode(val)
   enterpriseMode1.value = val
   isSettingsActive.value = false
   router.push({

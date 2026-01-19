@@ -221,3 +221,11 @@ export const apiInstitutionList = (params) => {
     params
   })
 }
+// 客服助手用户列表
+export const apiServiceLists = (params) => {
+  return request({
+    url: '/h5/chat/serviceLists',
+    method: 'GET',
+    params
+  })
+}
