@@ -703,9 +703,6 @@ onBeforeUnmount(() => {
         height: 30px;
         padding-right: 4px;
       }
-      .good_detils{
-
-      }
     }
   }
   .card-body{
