@@ -42,6 +42,7 @@
             'bubble-left': !message.is_me,
             'bubble-active': activeMessageId === message.id
           }"
+          @click="handleMessageClick(message.msg_content)"
           @contextmenu.prevent="openTextContextMenu(message, $event)"
         >
           <div class="message-text">
@@ -170,6 +171,23 @@ const closeProfileCard = () => {
   showProfileCard.value = false;
   profileUserId.value = null;
 }
+//点击链接
+const handleMessageClick = (content) => {
+  // 检查是否是网址
+  const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+  const isUrl = urlPattern.test(content.trim());
+  
+  if (isUrl) {
+    // 确保网址有协议前缀
+    let urlToOpen = content.trim();
+    if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+      urlToOpen = 'https://' + urlToOpen;
+    }
+    
+    // 在新标签页打开网址
+    window.open(urlToOpen, '_blank');
+  }
+};
 
 
 
@@ -218,22 +236,13 @@ const collect = async () => {
   closeContextMenu();
 }
 
-
-
-
-
-
-
-
 // Websocket消息处理
 const handleWebSocketMessage = async (event) => {
   const message = event.detail
-  
   // 处理私聊和群聊消息
   if (message.type === 'chat_record' ) {
     handleNewMessage(message)
   }
-  
 }
 // 添加消息处理函数
 const handleNewMessage = (message) => {
@@ -255,8 +264,6 @@ const handleNewMessage = (message) => {
     }
   }
 }
-
-
 
 //消息免打扰
 const Disturb = async () => {
@@ -281,8 +288,6 @@ const ClearContent = async () => {
   await apiClearContent(message_id.value)
   getSessionsDetail();
 }
-
-
 
 //子组件函数
 const triggerImageUpload = () => {
@@ -361,7 +366,6 @@ const getSessionsDetail = async (id) => {
       limit: 20,
       page: page.value
     })
-    
     if (page.value === 1) {
       SessionsDetail.value = res.data.data.reverse()
       // 初始化时滚动到底部
@@ -371,14 +375,12 @@ const getSessionsDetail = async (id) => {
       const newMessages = res.data.data.reverse()
       const prevScrollHeight = messageListRef.value.scrollHeight
       SessionsDetail.value = [...newMessages, ...SessionsDetail.value]
-      
       // 保持滚动位置
       nextTick(() => {
         const scrollHeightDifference = messageListRef.value.scrollHeight - prevScrollHeight
         messageListRef.value.scrollTop = scrollHeightDifference
       })
     }
-    
     hasMore.value = res.data.last_page > page.value
   } catch (error) {
     console.error("获取会话详情失败:", error)
@@ -392,17 +394,14 @@ const getSessionsDetail = async (id) => {
 const scrollToBottom = () => {
   const container = messageListRef.value;
   if (!container) return;
-  
   // 获取所有图片元素
   const images = container.querySelectorAll('.message-image-container img');
   let loadedCount = 0;
-  
   if (images.length === 0) {
     // 如果没有图片，直接滚动到底部
     container.scrollTop = container.scrollHeight;
     return;
   }
-  
   // 等待所有图片加载完成
   images.forEach(img => {
     if (img.complete) {
@@ -416,12 +415,10 @@ const scrollToBottom = () => {
       };
     }
   });
-  
   // 如果所有图片都已加载完成
   if (loadedCount === images.length) {
     container.scrollTop = container.scrollHeight;
   }
-  
   // 设置超时回退，确保无论如何都能滚动
   setTimeout(() => {
     container.scrollTop = container.scrollHeight;
@@ -431,7 +428,6 @@ const scrollToBottom = () => {
 // 处理滚动事件
 const handleScroll = () => {
   if (!messageListRef.value || isLoading.value || loadingMore.value || !hasMore.value) return
-  
   // 滚动到顶部时加载更多
   if (messageListRef.value.scrollTop === 0) {
     loadMoreMessages()

@@ -61,7 +61,7 @@
       </div>
 
       <!-- 联系人分组 -->
-      <div class="contact-group" @click="toggleGroup('enterprise')">
+      <div class="contact-group" @click="toggleGroup('enterprise')" v-if="priseMode == 1 || priseMode == '1'">
         <div class="group-header">
           <el-icon :class="{'rotate-icon': activeGroup === 'enterprise'}">
             <ArrowRight />

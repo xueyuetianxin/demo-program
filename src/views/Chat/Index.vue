@@ -328,10 +328,11 @@ const sortedSessions = computed(() => {
   // 添加客服项（如果ServiceLists有数据）
   if (ServiceLists.value && ServiceLists.value.length > 0 && isEnterpriseMode.value) {
     // 计算总未读数
-    const totalUnread = ServiceLists.value.reduce((sum, item) => sum + (item.unread_count || 0), 0);
+    const totalUnread = ServiceLists.value.reduce((sum, item) => sum + (item.kf_unread_count || 0), 0);
     // 使用第一条记录的时间
     const firstMsgTime = ServiceLists.value[0]?.msg_time
     const firstMsgcontent = ServiceLists.value[0]?.last_msg
+    const firstMsgtype = ServiceLists.value[0]?.last_msg_type
     const customServiceItem = {
       chat_id: 'custom_service',
       chat_type: 20,
@@ -339,6 +340,7 @@ const sortedSessions = computed(() => {
       title: '客服助手',
       msg_time: firstMsgTime,
       last_msg: firstMsgcontent,
+      last_msg_type: firstMsgtype,
       unread_count: totalUnread,
       is_top: 0,
       avoid_disturb: 0
@@ -354,6 +356,7 @@ watch(() => chatStore.topStatusMap, () => {
   // 触发计算属性更新
   SessionsList.value = [...SessionsList.value];
 }, { deep: true });
+
 //退出群聊后进行更新
 const unwatch = watch(() => router.currentRoute.value, async (newRoute, oldRoute) => {
   if (newRoute.name === 'chat' && newRoute.query.forceReload) {
@@ -367,7 +370,6 @@ const unwatch = watch(() => router.currentRoute.value, async (newRoute, oldRoute
     }
   }
 }, { immediate: true });
-
 
 const handleScroll = () => {
   const el = chatList.value
@@ -389,7 +391,6 @@ onMounted(()=>{
       window.electronAPI.stopFlashNotification();
     }
   });
-  
 })
 onUnmounted(() => {
   unwatch(); // 取消路由监听
@@ -406,6 +407,12 @@ const formatLastMsg = (item) => {
       return '[语音]';
     case 4:
       return '[视频]';
+    case 6:
+      return '[商品]';
+    case 7:
+      return '[系统信息]';
+    case 10:
+      return '[系统信息]';
     default:
       return item.last_msg;
   }
@@ -465,6 +472,9 @@ const selectChat = (item) => {
     })
   } else if (item.chat_type === 20) {
     isCustomStatus.value = true
+    router.push({
+      name: 'chat'
+    })
   }
 }
 const selectCustom = (item) => {
@@ -475,13 +485,17 @@ const selectCustom = (item) => {
       group_id: item.chat_id,
       nickname: item.title,
       message_id: item.id,
-      sign: item.sign
+      sign: item.sign,
+      store_name: item.store_name
     }
   })
 }
 
 const toggleCustom = () => {
   isCustomStatus.value = !isCustomStatus.value
+  router.push({
+    name: 'chat'
+  })
 }
 
 const handleWebSocketMessage = async (event) => {
@@ -493,6 +507,7 @@ const handleWebSocketMessage = async (event) => {
       console.log("触发闪烁")
       await sendFlashNotification();
       await playNotificationSound(); 
+      await showSystemNotification();
     }
   }
 }
@@ -518,6 +533,30 @@ const sendFlashNotification = async () => {
   } else {
     // 浏览器环境下的备选方案
     document.title = document.title === '新消息' ? '元信' : '新消息';
+  }
+};
+// 显示系统通知
+const showSystemNotification = async () => {
+  if (window.electronAPI) {
+    window.electronAPI.showNotification();
+  } else {
+    // 浏览器环境：使用Web Notification API
+    if (Notification.permission === 'granted') {
+      new Notification('新消息', {
+        body: '您有新消息',
+        icon: '/favicon.ico'
+      });
+    } else if (Notification.permission !== 'denied') {
+      // 如果权限未设置，先请求权限
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification('新消息', {
+            body: '您有新消息',
+            icon: '/favicon.ico'
+          });
+        }
+      });
+    }
   }
 };
 const debouncedHandleWebSocketMessage = debounce(handleWebSocketMessage, 300);

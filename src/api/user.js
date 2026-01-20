@@ -229,3 +229,19 @@ export const apiServiceLists = (params) => {
     params
   })
 }
+// 客服聊天会话详情
+export const apiServiceDetail = (id, params) => {
+  return request({
+    url: `/h5/customerService/sessionDetail/${id}`,
+    method: 'GET',
+    params
+  })
+}
+//客服发送聊天消息
+export const apiCustomerSendMessage = (message_id, data) => {
+  return request({
+    url: `/h5/customerService/sendMessage/${message_id}`,
+    method: 'POST',
+    data
+  })
+}
