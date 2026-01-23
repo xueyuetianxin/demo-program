@@ -6,11 +6,15 @@
         <router-link 
           to="/chat" 
           class="nav-link"
-          :style="{ color: ($route.name === 'chat' || $route.name === 'private-chat-detail' || $route.name === 'group-chat-detail') ? '#07C160' : '#999' }"
+          :style="{ color: ($route.name === 'chat' || $route.name === 'private-chat-detail' 
+          || $route.name === 'group-chat-detail' || $route.name === 'custom-chat-detail') 
+          ? '#07C160' : '#999' }"
         >
           <img 
             class="icons" 
-            :src="($route.name === 'chat' || $route.name === 'private-chat-detail' || $route.name === 'group-chat-detail') ? homeInactive    : homeActive" 
+            :src="($route.name === 'chat' || $route.name === 'private-chat-detail' 
+            || $route.name === 'group-chat-detail' || $route.name === 'custom-chat-detail') 
+            ? homeInactive    : homeActive" 
             alt="聊天"
           >
           <div>聊天</div>

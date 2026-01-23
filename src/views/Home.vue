@@ -131,6 +131,8 @@ const handleLogin = async () => {
     console.log(response.data.token)
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('uid', response.data.uid);
+      localStorage.setItem('nickname', response.data.nickname);
+      localStorage.setItem('logo', response.data.logo);
     
 
       const userInfo = {

@@ -507,8 +507,11 @@ const handleWebSocketMessage = async (event) => {
       console.log("触发闪烁")
       await sendFlashNotification();
       await playNotificationSound(); 
-      await showSystemNotification();
     }
+  }
+  if(message.type === 'CustomerServiceNewSession'){
+    console.log("有人进入了店铺")
+    await showSystemNotification();
   }
 }
 // 新增声音播放

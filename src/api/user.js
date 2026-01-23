@@ -245,3 +245,43 @@ export const apiCustomerSendMessage = (message_id, data) => {
     data
   })
 }
+//创建会议
+export const apiCreateMeeting = (data) => {
+  return request({
+    url: '/h5/meeting/noRoomStore',
+    method: 'POST',
+    data
+  })
+}
+// 会议列表
+export const apiMeetingLists = (params) => {
+  return request({
+    url: '/h5/meeting/meetingLists',
+    method: 'GET',
+    params
+  })
+}
+//结束会议
+export const apiQuitMeeting = (data) => {
+  return request({
+    url: '/h5/meeting/quitMeeting',
+    method: 'POST',
+    data
+  })
+}
+//加入会议
+export const apiJoinMeeting = (data) => {
+  return request({
+    url: '/h5/meeting/joinMeeting',
+    method: 'POST',
+    data
+  })
+}
+// 获取企业云盘
+export const apiMaterialGroup = (params) => {
+  return request({
+    url: '/h5/materialGroup/allLists',
+    method: 'GET',
+    params
+  })
+}

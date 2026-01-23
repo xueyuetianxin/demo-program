@@ -7,7 +7,8 @@
           <el-icon :class="{'rotate-icon': activeGroup === 'newFriends'}">
             <ArrowRight />
           </el-icon>
-          <span>新的朋友</span>
+          <span v-if="priseMode == 0 || priseMode == '0'">新的朋友</span>
+          <span v-if="priseMode == 1 || priseMode == '1'">新的客户</span>
         </div>
         <!-- 申请列表 -->
         <div v-show="activeGroup === 'newFriends'" class="group-content">
@@ -39,7 +40,8 @@
           <el-icon :class="{'rotate-icon': activeGroup === 'contacts'}">
             <ArrowRight />
           </el-icon>
-          <span>联系人</span>
+          <span v-if="priseMode == 1 || priseMode == '1'">我的客户</span>
+          <span v-if="priseMode == 0 || priseMode == '0'">联系人</span>
           <span class="friend-count">({{ friendList.length }})</span>
         </div>
         <!-- 好友列表 -->
