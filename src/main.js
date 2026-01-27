@@ -34,6 +34,21 @@ app.use(ElementPlus)
 app.mount('#app')
 const userStore = useUserStore()
 
+// 添加 Electron 通知点击处理
+const setupElectronHandlers = () => {
+  if (window.electronAPI) {
+    // 处理通知点击后的路由跳转
+    window.electronAPI.receive('navigate-to', ({ routePath, state }) => {
+      router.push({
+        path: routePath,
+        state // 传递状态
+      });
+    });
+  }
+}
+
+setupElectronHandlers()
+
 // 如果用户已登录，连接WebSocket
 if (userStore.isLoggedIn) {
   setTimeout(() => {

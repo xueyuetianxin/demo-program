@@ -259,10 +259,11 @@ const QuitMeeting = async () => {
     type: 'success'
   })
 }
+const userToken = localStorage.getItem('token')
 //进入会议详情
 const enterMeeting = (item) => {
   if(Number(item.compere_id) === Number(userUid.value)){
-    window.open(`https://www.11xyz.com/meeting-detail?id=${item.id}`, '_blank')
+    window.open(`https://www.11xyz.com/meeting-detail?id=${item.id}&token=${userToken}`, '_blank')
   } else {
     Enterstatus.value = !Enterstatus.value
     meeting_idInput.value = item.id
@@ -291,7 +292,7 @@ const joinMeeting = async () => {
     type: 'success'
   })
   if(secondJoin.value){
-    window.open(`https://www.11xyz.com/meeting-detail?id=${meeting_idInput.value}`, '_blank')
+    window.open(`https://www.11xyz.com/meeting-detail?id=${meeting_idInput.value}&token=${userToken}`, '_blank')
   }
   meeting_idInput.value = ''
 }

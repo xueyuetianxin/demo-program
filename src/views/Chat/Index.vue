@@ -378,7 +378,13 @@ const handleScroll = () => {
   // 检查是否滚动到底部（添加50px的缓冲区域）
   const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight
   if (scrollBottom < 50) {
-    getSessionsList()
+    if (isCustomStatus.value) {
+      console.log("客服下一页")
+    } else {
+      if (!noMore.value) {
+        getSessionsList()
+      }
+    }
   }
 }
 onMounted(()=>{
@@ -480,7 +486,7 @@ const selectChat = (item) => {
 const selectCustom = (item) => {
   router.push({ 
     name: 'custom-chat-detail',
-    params: { id: item.chat_id },
+    params: { id: item.id },
     state: { 
       group_id: item.chat_id,
       nickname: item.title,
@@ -511,7 +517,11 @@ const handleWebSocketMessage = async (event) => {
   }
   if(message.type === 'CustomerServiceNewSession'){
     console.log("有人进入了店铺")
-    await showSystemNotification();
+    await showSystemNotification(message);
+  }
+  if(message.type === 'ordinary_login_remind'){
+    console.log("有人进入了展馆")
+    await showSystemNotification(message);
   }
 }
 // 新增声音播放
@@ -538,10 +548,47 @@ const sendFlashNotification = async () => {
     document.title = document.title === '新消息' ? '元信' : '新消息';
   }
 };
+let notificationCount = 0;
+let lastNotificationTime = 0;
+const NOTIFICATION_LIMIT = 2; // 每分钟最多2次
+const ONE_MINUTE = 60 * 1000; // 1分钟的毫秒数
 // 显示系统通知
-const showSystemNotification = async () => {
+const showSystemNotification = async (message) => {
+  const now = Date.now();
+  // 如果超过1分钟，重置计数器
+  if (now - lastNotificationTime > ONE_MINUTE) {
+    notificationCount = 0;
+    lastNotificationTime = now;
+  }
+  // 检查是否达到限制
+  if (notificationCount >= NOTIFICATION_LIMIT) {
+    console.log('已达到每分钟通知限制');
+    return;
+  }
+  // 增加计数器
+  notificationCount++;
+
+  let title, body, routePath, state;
+  if (message.type === 'CustomerServiceNewSession') {
+    title = `${message.session?.store?.title || '店铺'}有客户咨询来了`;
+    body = '有新的客户进入店铺，请及时接待';
+    routePath = `/chat/custom/${message.session.id}`;
+    state = { message_id: message.session?.id };
+  } 
+  else if (message.type === 'ordinary_login_remind') {
+    title = `${message.nickname || '有人'}进入了${message.title || '展馆'}`;
+    body = '您好,有人进入你的数字空间了';
+    routePath = `/chat/group/${message.model_id}`; // 使用展馆的路由格式
+    state = { params: { id: message.model_id } };
+  }
+  else {
+    title = '新消息';
+    body = '您有新消息';
+    routePath = '/chat'; // 默认跳转到聊天页面
+    state = {};
+  }
   if (window.electronAPI) {
-    window.electronAPI.showNotification();
+    window.electronAPI.showNotification(title, body, routePath, state);
   } else {
     // 浏览器环境：使用Web Notification API
     if (Notification.permission === 'granted') {
@@ -576,7 +623,6 @@ function debounce(func, wait) {
 }
 
 //websocket更新列表
-// 更新会话逻辑
 const updateSessionForNewMessage = (message) => {
   // 获取当前用户ID
   const currentUserId = userStore.userInfo.id;
